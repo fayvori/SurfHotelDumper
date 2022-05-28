@@ -219,11 +219,7 @@ func main() {
 					log.Printf(err.Error())
 				}
 
-				if false {
-					fmt.Println(result)
-				}
-
-				//fmt.Printf("Inserted %d\n", result.InsertedID)
+				fmt.Printf("Inserted %d\n", result.InsertedID)
 			}
 		}
 	}

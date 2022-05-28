@@ -2,7 +2,6 @@ package main
 
 import (
 	"SurfHotelsDumper/constants"
-	"SurfHotelsDumper/databases"
 	"SurfHotelsDumper/hasher"
 	"SurfHotelsDumper/models"
 	"context"
@@ -14,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,22 +22,49 @@ var (
 	Ctx    = context.TODO()
 )
 
-func AddPhotos(hotel *models.Hotel) {
-	stringId := strconv.Itoa(hotel.Id)
-	resp, err := client.R().
-		SetQueryParams(map[string]string{
-			"id": stringId,
-		}).
-		Get("https://yasen.hotellook.com/photos/hotel_photos")
+func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
+	var length = len(hotels.Result)
 
-	if err != nil {
-		fmt.Println(err.Error())
+	fmt.Println("length", length)
+
+	for i := 0; i < length; i += 200 {
+		var hotelsIds []string
+
+		fmt.Println("i value", i)
+
+		for j := 0; j < i; j++ {
+			fmt.Println("i value", i)
+			fmt.Println("j value", j)
+
+			for _, v := range hotels.Result[j:i] {
+				hotelsIds = append(hotelsIds, strconv.Itoa(v.Id))
+			}
+		}
+
+		resp, err := client.R().
+			SetQueryParams(map[string]string{
+				"id": strings.Join(hotelsIds, ","),
+			}).
+			Get("https://yasen.hotellook.com/photos/hotel_photos")
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		var photos map[string][]int
+		err = json.Unmarshal(resp.Body(), &photos)
+
+		fmt.Println("photos from id", i, photos)
+
+		for i := 0; i < len(hotels.Result); i++ {
+			id := strconv.Itoa(hotels.Result[i].Id)
+			id1, _ := strconv.Atoi(id)
+
+			if hotels.Result[i].Id == id1 {
+				hotels.Result[i].PhotoHotel = photos[id]
+			}
+		}
 	}
-
-	var photos map[string][]int
-	err = json.Unmarshal(resp.Body(), &photos)
-
-	hotel.PhotoHotel = photos[stringId]
 }
 
 const (
@@ -49,31 +76,30 @@ const (
 
 func main() {
 	const uri = "mongodb://localhost:27017"
-	mongo, err := mongo.Connect(Ctx, options.Client().ApplyURI(uri))
+	connect, err := mongo.Connect(Ctx, options.Client().ApplyURI(uri))
 
 	if err != nil {
 		log.Printf(err.Error())
 	}
 
 	defer func() {
-		if err := mongo.Disconnect(Ctx); err != nil {
+		if err := connect.Disconnect(Ctx); err != nil {
 			panic(err)
 		}
 	}()
 
-	if err := mongo.Ping(Ctx, readpref.Primary()); err != nil {
+	if err := connect.Ping(Ctx, readpref.Primary()); err != nil {
 		log.Fatalf(err.Error())
 	}
 
 	client.
-		SetRetryCount(200)
+		SetRetryCount(400)
 
-	coll := mongo.Database("surf-hotelDumper").Collection("hotels")
+	coll := connect.Database("surf-hotelDumper").Collection("hotels")
 
-	iatas := []string{"MOW", "AER", "LED"}
+	iatas := []string{"MOW", "LED"}
 
 	for _, iata := range iatas {
-
 		searchIdhash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
 			constants.TOKEN,
 			constants.MARKER,
@@ -147,25 +173,25 @@ func main() {
 		}
 
 		if len(hotels.Result) > 0 {
-			for _, v := range hotels.Result {
-				//AddPhotos(&v)
+			AddPhotosToHotelDbResponse(&hotels)
 
-				// set iata for search
+			for _, v := range hotels.Result {
+				// set iata for searching
 				v.Iata = iata
 
 				// set room total to 0 for a skeleton app condition
 				v.Rooms[0].Total = 0
 
-				// set hotel photos now for omitting request to hotellook and fastest speed
-				v.PhotoHotel = []int{5162091534, 5162091993}
-
-				result, err := coll.InsertOne(databases.Ctx, v)
-
+				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {
 					log.Printf(err.Error())
 				}
 
-				fmt.Printf("Inserted %d\n", result.InsertedID)
+				if false {
+					fmt.Println(result)
+				}
+
+				//fmt.Printf("Inserted %d\n", result.InsertedID)
 			}
 		}
 	}

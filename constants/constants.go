@@ -1,5 +1,9 @@
 package constants
 
+import "context"
+
+var Ctx = context.TODO()
+
 const (
 	TOKEN          = "c504c5e867f5677dabea9c893f82c0b4"
 	MARKER         = "327233"

@@ -22,47 +22,79 @@ var (
 	Ctx    = context.TODO()
 )
 
+//func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
+//var length = len(hotels.Result)
+
+//fmt.Println("length", length)
+//
+//for i := 0; i < length; i += 200 {
+//	var hotelsIds []string
+//
+//	fmt.Println("i value", i)
+//
+//	for j := 0; j < i; j++ {
+//		fmt.Println("i value", i)
+//		fmt.Println("j value", j)
+//
+//		for _, v := range hotels.Result[j:i] {
+//			hotelsIds = append(hotelsIds, strconv.Itoa(v.Id))
+//		}
+//	}
+//
+//	resp, err := client.R().
+//		SetQueryParams(map[string]string{
+//			"id": strings.Join(hotelsIds, ","),
+//		}).
+//		Get("https://yasen.hotellook.com/photos/hotel_photos")
+//
+//	if err != nil {
+//		fmt.Println(err.Error())
+//	}
+//
+//	time.Sleep(2 * time.Second)
+//
+//	var photos map[string][]int
+//	err = json.Unmarshal(resp.Body(), &photos)
+//
+//	fmt.Println("photos from id", i, photos)
+//
+//	for i := 0; i < len(hotels.Result); i++ {
+//		id := strconv.Itoa(hotels.Result[i].Id)
+//		id1, _ := strconv.Atoi(id)
+//
+//		if hotels.Result[i].Id == id1 {
+//			hotels.Result[i].PhotoHotel = photos[id]
+//		}
+//	}
+//}
+//}
+
 func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
-	var length = len(hotels.Result)
+	var hotelsIds []string
 
-	fmt.Println("length", length)
+	for i := 0; i < 200; i++ {
+		hotelsIds = append(hotelsIds, strconv.Itoa(hotels.Result[i].Id))
+	}
 
-	for i := 0; i < length; i += 200 {
-		var hotelsIds []string
+	resp, err := client.R().
+		SetQueryParams(map[string]string{
+			"id": strings.Join(hotelsIds, ","),
+		}).
+		Get("https://yasen.hotellook.com/photos/hotel_photos")
 
-		fmt.Println("i value", i)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
-		for j := 0; j < i; j++ {
-			fmt.Println("i value", i)
-			fmt.Println("j value", j)
+	var photos map[string][]int
+	err = json.Unmarshal(resp.Body(), &photos)
 
-			for _, v := range hotels.Result[j:i] {
-				hotelsIds = append(hotelsIds, strconv.Itoa(v.Id))
-			}
-		}
+	for i := 0; i < len(hotels.Result); i++ {
+		id := strconv.Itoa(hotels.Result[i].Id)
+		id1, _ := strconv.Atoi(id)
 
-		resp, err := client.R().
-			SetQueryParams(map[string]string{
-				"id": strings.Join(hotelsIds, ","),
-			}).
-			Get("https://yasen.hotellook.com/photos/hotel_photos")
-
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		var photos map[string][]int
-		err = json.Unmarshal(resp.Body(), &photos)
-
-		fmt.Println("photos from id", i, photos)
-
-		for i := 0; i < len(hotels.Result); i++ {
-			id := strconv.Itoa(hotels.Result[i].Id)
-			id1, _ := strconv.Atoi(id)
-
-			if hotels.Result[i].Id == id1 {
-				hotels.Result[i].PhotoHotel = photos[id]
-			}
+		if hotels.Result[i].Id == id1 {
+			hotels.Result[i].PhotoHotel = photos[id]
 		}
 	}
 }

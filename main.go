@@ -6,6 +6,7 @@ import (
 	"SurfHotelsDumper/models"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -22,52 +24,19 @@ var (
 	Ctx    = context.TODO()
 )
 
-//func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
-//var length = len(hotels.Result)
-
-//fmt.Println("length", length)
-//
-//for i := 0; i < length; i += 200 {
-//	var hotelsIds []string
-//
-//	fmt.Println("i value", i)
-//
-//	for j := 0; j < i; j++ {
-//		fmt.Println("i value", i)
-//		fmt.Println("j value", j)
-//
-//		for _, v := range hotels.Result[j:i] {
-//			hotelsIds = append(hotelsIds, strconv.Itoa(v.Id))
-//		}
-//	}
-//
-//	resp, err := client.R().
-//		SetQueryParams(map[string]string{
-//			"id": strings.Join(hotelsIds, ","),
-//		}).
-//		Get("https://yasen.hotellook.com/photos/hotel_photos")
-//
-//	if err != nil {
-//		fmt.Println(err.Error())
-//	}
-//
-//	time.Sleep(2 * time.Second)
-//
-//	var photos map[string][]int
-//	err = json.Unmarshal(resp.Body(), &photos)
-//
-//	fmt.Println("photos from id", i, photos)
-//
-//	for i := 0; i < len(hotels.Result); i++ {
-//		id := strconv.Itoa(hotels.Result[i].Id)
-//		id1, _ := strconv.Atoi(id)
-//
-//		if hotels.Result[i].Id == id1 {
-//			hotels.Result[i].PhotoHotel = photos[id]
-//		}
-//	}
-//}
-//}
+func ReverseSlice(data interface{}) {
+	value := reflect.ValueOf(data)
+	if value.Kind() != reflect.Slice {
+		panic(errors.New("data must be a slice type"))
+	}
+	valueLen := value.Len()
+	for i := 0; i <= int((valueLen-1)/2); i++ {
+		reverseIndex := valueLen - 1 - i
+		tmp := value.Index(reverseIndex).Interface()
+		value.Index(reverseIndex).Set(value.Index(i))
+		value.Index(i).Set(reflect.ValueOf(tmp))
+	}
+}
 
 func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
 	var hotelsIds []string
@@ -226,6 +195,7 @@ func main() {
 		if len(hotels.Result) > 0 {
 			AddPhotosToHotelDbResponse(&hotels)
 
+			ReverseSlice(hotels.Result)
 			for _, v := range hotels.Result {
 				// set iata for searching
 				v.Iata = iata

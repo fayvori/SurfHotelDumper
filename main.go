@@ -11,10 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var (
@@ -100,11 +100,15 @@ func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
 }
 
 const (
-	startDate string = "2022-05-26"
-	endDate   string = "2022-06-10"
+	startDate string = "2022-06-04"
+	endDate   string = "2022-06-16"
 	currency  string = "RUB"
 	language  string = "ru"
 )
+
+type MarshaledIatas struct {
+	Countries []string `json:"countries"`
+}
 
 func main() {
 	const uri = "mongodb://localhost:27017"
@@ -129,10 +133,13 @@ func main() {
 
 	coll := connect.Database("surf-hotelDumper").Collection("hotels")
 
-	iatas := []string{"MOW", "LED"}
+	var iatas MarshaledIatas
 
-	for _, iata := range iatas {
-		searchIdhash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+	f, err := ioutil.ReadFile("optimizedCountries.json")
+	err = json.Unmarshal(f, &iatas)
+
+	for _, iata := range iatas.Countries {
+		hotelsHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
 			constants.TOKEN,
 			constants.MARKER,
 			"1",
@@ -142,8 +149,10 @@ func main() {
 			constants.CUSTOMER_IP,
 			iata,
 			"ru",
-			"0",
+			"1",
 		))
+
+		fmt.Println(iata)
 
 		respSearchId, err := client.R().
 			EnableTrace().
@@ -156,56 +165,60 @@ func main() {
 				constants.CUSTOMER_IP,
 				language,
 				currency,
-				"0",
+				"1",
 				constants.MARKER,
-				searchIdhash,
+				hotelsHash,
 			))
 
+		fmt.Println(string(respSearchId.Body()))
+
 		if err != nil {
 			log.Printf(err.Error())
 		}
-
-		var searchId models.SearchIdResponse
-		err = json.Unmarshal(respSearchId.Body(), &searchId)
-		if err != nil {
-			log.Printf(err.Error())
-		}
-
-		time.Sleep(20 * time.Second)
-
-		hotelHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s",
-			constants.TOKEN,
-			constants.MARKER,
-			strconv.Itoa(constants.HOTELS_LIMIT),
-			"0",
-			"1",
-			strconv.Itoa(searchId.SearchId),
-			"0",
-			"popularity",
-		))
-
-		resp, err := client.R().
-			SetQueryParams(map[string]string{
-				"searchId":   strconv.Itoa(searchId.SearchId),
-				"limit":      strconv.Itoa(constants.HOTELS_LIMIT),
-				"sortBy":     "popularity",
-				"sortAsc":    "0",
-				"roomsCount": "1",
-				"offset":     "0",
-				"marker":     constants.MARKER,
-				"signature":  hotelHash,
-			}).
-			Get(fmt.Sprintf("%s/getResult.json", constants.HOTELLOOK_ADDR))
 
 		var hotels models.HotelResponse
-		err = json.Unmarshal(resp.Body(), &hotels)
-
+		err = json.Unmarshal(respSearchId.Body(), &hotels)
 		if err != nil {
 			log.Printf(err.Error())
 		}
 
+		//fmt.Printf("im here")
+		//time.Sleep(30 * time.Second)
+		//
+		//hotelHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s",
+		//	constants.TOKEN,
+		//	constants.MARKER,
+		//	strconv.Itoa(constants.HOTELS_LIMIT),
+		//	"0",
+		//	"1",
+		//	strconv.Itoa(searchId.SearchId),
+		//	"0",
+		//	"popularity",
+		//))
+		//
+		//resp, err := client.R().
+		//	SetQueryParams(map[string]string{
+		//		"searchId":   strconv.Itoa(searchId.SearchId),
+		//		"limit":      strconv.Itoa(constants.HOTELS_LIMIT),
+		//		"sortBy":     "popularity",
+		//		"sortAsc":    "0",
+		//		"roomsCount": "1",
+		//		"offset":     "0",
+		//		"marker":     constants.MARKER,
+		//		"signature":  hotelHash,
+		//	}).
+		//	Get(fmt.Sprintf("%s/getResult.json", constants.HOTELLOOK_ADDR))
+		//
+		//var hotels models.HotelResponse
+		//err = json.Unmarshal(resp.Body(), &hotels)
+		//
+		//if err != nil {
+		//	log.Printf(err.Error())
+		//}
+
+		fmt.Println(len(hotels.Result))
 		if len(hotels.Result) > 0 {
-			AddPhotosToHotelDbResponse(&hotels)
+			//AddPhotosToHotelDbResponse(&hotels)
 
 			for _, v := range hotels.Result {
 				// set iata for searching

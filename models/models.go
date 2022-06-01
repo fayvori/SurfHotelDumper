@@ -66,6 +66,7 @@ type Hotel struct {
 	Distance         float64        `json:"distance"`
 	PhotoHotel       []int          `json:"photoHotel"`
 	Iata             string         `json:"iata""`
+	Lang             string         `json:"lang"`
 }
 
 type HotelResponse struct {

@@ -209,6 +209,7 @@ func main() {
 			for _, v := range hotels.Result[:lengthToInsert] {
 				// set iata for searching
 				v.Iata = iata
+				v.Lang = language
 
 				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {

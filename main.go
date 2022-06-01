@@ -193,10 +193,20 @@ func main() {
 
 		fmt.Println(len(hotels.Result))
 		if len(hotels.Result) > 0 {
+			ReverseSlice(hotels.Result)
+			var lengthToInsert int
+
+			if len(hotels.Result) > 300 {
+				lengthToInsert = 300
+			} else {
+				lengthToInsert = len(hotels.Result)
+			}
+
 			AddPhotosToHotelDbResponse(&hotels)
 
-			ReverseSlice(hotels.Result)
-			for _, v := range hotels.Result {
+			fmt.Println("length to insert", lengthToInsert)
+
+			for _, v := range hotels.Result[:lengthToInsert] {
 				// set iata for searching
 				v.Iata = iata
 

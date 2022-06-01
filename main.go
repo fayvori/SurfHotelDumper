@@ -77,7 +77,7 @@ func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
 const (
 	startDate string = "2022-06-04"
 	endDate   string = "2022-06-16"
-	currency  string = "RUB"
+	currency  string = "USD"
 	language  string = "ru"
 )
 
@@ -209,9 +209,6 @@ func main() {
 			for _, v := range hotels.Result[:lengthToInsert] {
 				// set iata for searching
 				v.Iata = iata
-
-				// set room total to 0 for a skeleton app condition
-				v.Rooms[0].Total = 0
 
 				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {

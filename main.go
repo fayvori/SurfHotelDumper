@@ -72,8 +72,14 @@ var (
 func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
 	var hotelsIds []string
 
-	for i := 0; i < 200; i++ {
-		hotelsIds = append(hotelsIds, strconv.Itoa(hotels.Result[i].Id))
+	if len(hotels.Result) > 200 {
+		for i := 0; i < 200; i++ {
+			hotelsIds = append(hotelsIds, strconv.Itoa(hotels.Result[i].Id))
+		}
+	} else {
+		for i := 0; i < len(hotels.Result); i++ {
+			hotelsIds = append(hotelsIds, strconv.Itoa(hotels.Result[i].Id))
+		}
 	}
 
 	resp, err := client.R().
@@ -218,7 +224,7 @@ func main() {
 
 		fmt.Println(len(hotels.Result))
 		if len(hotels.Result) > 0 {
-			//AddPhotosToHotelDbResponse(&hotels)
+			AddPhotosToHotelDbResponse(&hotels)
 
 			for _, v := range hotels.Result {
 				// set iata for searching

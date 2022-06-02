@@ -210,7 +210,7 @@ func main() {
 				// set iata for searching
 				v.Iata = iata
 				v.Lang = language
-				v.Rooms = []models.HotelRoom{}
+				v.Rooms = []models.HotelRoom{v.Rooms[0]}
 
 				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {

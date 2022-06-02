@@ -123,7 +123,7 @@ func main() {
 			currency,
 			constants.CUSTOMER_IP,
 			iata,
-			"ru",
+			language,
 			"1",
 		))
 
@@ -210,6 +210,7 @@ func main() {
 				// set iata for searching
 				v.Iata = iata
 				v.Lang = language
+				v.Rooms = []models.HotelRoom{}
 
 				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {

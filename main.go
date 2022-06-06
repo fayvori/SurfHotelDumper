@@ -114,7 +114,8 @@ func main() {
 	f, err := ioutil.ReadFile("optimizedCountries.json")
 	err = json.Unmarshal(f, &iatas)
 
-	for key, iata := range iatas.Countries[:300] {
+	// :TODO the max is 200
+	for key, iata := range iatas.Countries[199:] {
 		hotelsHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
 			constants.TOKEN,
 			constants.MARKER,

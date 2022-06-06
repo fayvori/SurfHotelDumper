@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -75,8 +76,8 @@ func AddPhotosToHotelDbResponse(hotels *models.HotelResponse) {
 }
 
 const (
-	startDate string = "2022-06-04"
-	endDate   string = "2022-06-16"
+	startDate string = "2022-06-10"
+	endDate   string = "2022-06-20"
 	currency  string = "USD"
 	language  string = "ru"
 )
@@ -113,7 +114,7 @@ func main() {
 	f, err := ioutil.ReadFile("optimizedCountries.json")
 	err = json.Unmarshal(f, &iatas)
 
-	for _, iata := range iatas.Countries {
+	for key, iata := range iatas.Countries {
 		hotelsHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
 			constants.TOKEN,
 			constants.MARKER,
@@ -204,7 +205,8 @@ func main() {
 
 			AddPhotosToHotelDbResponse(&hotels)
 
-			fmt.Println("length to insert", lengthToInsert)
+			fmt.Println("key: ", key)
+			fmt.Println("length to insert: ", lengthToInsert)
 
 			for _, v := range hotels.Result[:lengthToInsert] {
 				// set iata for searching
@@ -219,6 +221,11 @@ func main() {
 
 				fmt.Printf("Inserted %d\n", result.InsertedID)
 			}
+		}
+
+		if key%100 == 0 {
+			fmt.Println("take a little break")
+			time.Sleep(2 * time.Hour)
 		}
 	}
 }

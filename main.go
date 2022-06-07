@@ -14,10 +14,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
 	"log"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var (
@@ -114,7 +114,8 @@ func main() {
 	f, err := ioutil.ReadFile("optimizedCountries.json")
 	err = json.Unmarshal(f, &iatas)
 
-	// :TODO the max is 200
+	file, err := os.Open("countriesWithNonZeroHotels.txt")
+	// :TODO the max is 200-1 with 1,5 hours break
 	for key, iata := range iatas.Countries[199:] {
 		hotelsHash := hasher.Md5HotelHasher(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
 			constants.TOKEN,
@@ -222,11 +223,8 @@ func main() {
 
 				fmt.Printf("Inserted %d\n", result.InsertedID)
 			}
-		}
 
-		if key%100 == 0 {
-			fmt.Println("take a little break")
-			time.Sleep(2 * time.Hour)
+			file.Write([]byte(fmt.Sprintf("%s,", iata)))
 		}
 	}
 }

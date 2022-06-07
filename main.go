@@ -210,7 +210,7 @@ func main() {
 			fmt.Println("key: ", key)
 			fmt.Println("length to insert: ", lengthToInsert)
 
-			for _, v := range hotels.Result[:lengthToInsert] {
+			for key, v := range hotels.Result[:lengthToInsert] {
 				// set iata for searching
 				v.Iata = iata
 				v.Lang = language
@@ -219,6 +219,10 @@ func main() {
 				result, err := coll.InsertOne(constants.Ctx, v)
 				if err != nil {
 					log.Printf(err.Error())
+				}
+
+				if key == 190 {
+					break
 				}
 
 				fmt.Printf("Inserted %d\n", result.InsertedID)

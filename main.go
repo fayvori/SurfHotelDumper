@@ -227,4 +227,6 @@ func main() {
 			file.Write([]byte(fmt.Sprintf("%s,", iata)))
 		}
 	}
+
+	file.Close()
 }
